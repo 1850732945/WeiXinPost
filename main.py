@@ -35,9 +35,14 @@ def get_weather(province, city):
         return "未知", "N/A", "N/A"
         
 def get_love_days():
-    """计算认识天数"""
-    start_date = datetime.strptime(config.love_date, "%Y-%m-%d").date()
-    return (date.today() - start_date).days
+    """修正天数计算逻辑"""
+    try:
+        start_date = datetime.strptime(config.love_date, "%Y-%m-%d").date()
+        days = (date.today() - start_date).days
+        return f"第{days}天"  # 格式化为"第X天"
+    except Exception as e:
+        print(f"计算天数失败: {e}")
+        return "未知"
 
 def get_morning_message():
     """获取天行数据早安文案"""
