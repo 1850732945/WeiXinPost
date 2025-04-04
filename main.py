@@ -12,7 +12,7 @@ def get_access_token():
 def get_weather(province, city):
     """使用和风天气API获取天气数据"""
     city_id = "101070301"  # 鞍山市固定ID
-    key = "850912c546084a33b1e7fde37316d6b1"
+    key = "e2ad3377fbc34ffc99ca56707d668011"
     
     # 获取实时天气
     now_url = f"https://devapi.qweather.com/v7/weather/now?location={city_id}&key={key}"
