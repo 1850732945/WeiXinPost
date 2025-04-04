@@ -11,4 +11,4 @@ love_date = "2025-4-1"  # 认识日期
 post_time = "07:20:00"  # 推送时间
 
 # 天行数据API配置（需申请：https://www.tianapi.com/）
-tianxing_api_key = "你的天行API密钥"  # 替换为实际key
+tianxing_api_key = "f0d57f5491cee338ba88469762acf2b8"  # 替换为实际key
