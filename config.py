@@ -1,7 +1,7 @@
 # 微信公众号配置
 app_id = "wxf364c54ced4ab1db"
 app_secret = "27302f15c5df687c7f844354be670d4c"
-template_id = "VR9nbE_aecWsMXNsQ-L-dszgymzOXE8-2phN3diL-DM"
+template_id = "lzHUT68k2rN_JpHmH1TZYRrpGxuCAomNImvJJc17Uh0"
 user = ["oTQxd6lTbNtTxTZ2LearHXBFWU"]
 
 # 基础信息配置
