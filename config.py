@@ -1,6 +1,5 @@
 # 公众号配置
 # 公众号appId
-year = 2025
 app_id = "wxf364c54ced4ab1db"
 # 公众号appSecret
 app_secret = "27302f15c5df687c7f844354be670d4c"
