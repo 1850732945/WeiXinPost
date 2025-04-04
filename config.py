@@ -1,7 +1,7 @@
 # 微信公众号配置
 app_id = "wxf364c54ced4ab1db"
 app_secret = "27302f15c5df687c7f844354be670d4c"
-template_id = "ksWXGq9ccOnOF4NC3wbf9ForaV-1aJ4fWGGM1E6ZdJw"  # 替换为你的模板ID
+template_id = "VR9nbE_aecWsMXNsQ-L-dszgymzOXE8-2phN3diL-DM"  # 替换为你的模板ID
 user = ["oTQxd6lTbNtTxTZ2LeIk3rHXBFWU"]  # 接收者openid
 
 # 基础信息配置
