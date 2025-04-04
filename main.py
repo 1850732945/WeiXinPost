@@ -10,39 +10,41 @@ def get_access_token():
     return response["access_token"]
 
 def get_weather(province, city):
-    """使用和风天气API（稳定版）"""
+    """使用和风天气API获取天气数据"""
     city_id = "101070301"  # 鞍山市固定ID
-    key = "850912c546084a33b1e7fde37316d6b1"  # 申请地址：https://dev.qweather.com/
+    key = "850912c546084a33b1e7fde37316d6b1"
     
-    url = f"https://devapi.qweather.com/v7/weather/now?location={city_id}&key={key}"
+    # 获取实时天气
+    now_url = f"https://devapi.qweather.com/v7/weather/now?location={city_id}&key={key}"
+    # 获取3天预报
+    forecast_url = f"https://devapi.qweather.com/v7/weather/3d?location={city_id}&key={key}"
+    
     try:
-        response = requests.get(url, timeout=5)
-        data = response.json()
+        # 获取实时天气
+        now_data = requests.get(now_url, timeout=5).json()
+        weather = now_data["now"]["text"]
+        temp_now = now_data["now"]["temp"]
         
-        weather = data["now"]["text"]              # 天气状况（如"晴"）
-        temp = data["now"]["temp"] + "℃"          # 当前温度
-        temp_min = data["now"]["feelsLike"] + "℃"  # 体感温度（或改用预报API获取真实最低温）
+        # 获取预报数据
+        forecast_data = requests.get(forecast_url, timeout=5).json()
+        today_forecast = forecast_data["daily"][0]
         
-        # 获取24小时预报中的真实最高最低温
-        forecast_url = f"https://devapi.qweather.com/v7/weather/24h?location={city_id}&key={key}"
-        forecast = requests.get(forecast_url).json()
-        temp_max = forecast["hourly"][0]["temp"] + "℃"
-        temp_min = forecast["hourly"][0]["feelsLike"] + "℃"
+        temp_max = today_forecast["tempMax"] + "℃"
+        temp_min = today_forecast["tempMin"] + "℃"
         
         return weather, temp_max, temp_min
     except Exception as e:
         print(f"天气获取失败: {e}")
         return "未知", "N/A", "N/A"
-        
+
 def get_love_days():
-    """修正天数计算逻辑"""
+    """计算认识天数（返回纯数字）"""
     try:
         start_date = datetime.strptime(config.love_date, "%Y-%m-%d").date()
-        days = (date.today() - start_date).days
-        return f"第{days}天"  # 格式化为"第X天"
+        return str((date.today() - start_date).days)
     except Exception as e:
         print(f"计算天数失败: {e}")
-        return "未知"
+        return "0"
 
 def get_morning_message():
     """获取天行数据早安文案"""
@@ -54,7 +56,7 @@ def get_morning_message():
             return response.json()["newslist"][0]["content"]
     except Exception as e:
         print(f"获取早安文案失败: {e}")
-    return "希望你今天也要好好吃饭 乖乖睡觉 坏心情都与你无关！"  # 默认文案
+    return "希望你今天也要好好吃饭 乖乖睡觉 坏心情都与你无关！"
 
 def send_daily_message():
     """发送每日推送"""
@@ -68,9 +70,9 @@ def send_daily_message():
             "date": {"value": datetime.now().strftime("%Y-%m-%d"), "color": "#173177"},
             "city": {"value": config.city, "color": "#173177"},
             "weather": {"value": weather, "color": "#FF9900"},
-            "max_temperature": {"value": max_temp + "℃", "color": "#FF0000"},
-            "min_temperature": {"value": min_temp + "℃", "color": "#0000FF"},
-            "love_days": {"value": f"第{get_love_days()}天", "color": "#FF00FF"},
+            "min_temperature": {"value": min_temp, "color": "#0000FF"},
+            "max_temperature": {"value": max_temp, "color": "#FF0000"},
+            "love_day": {"value": get_love_days(), "color": "#FF00FF"},
             "message": {"value": get_morning_message(), "color": "#00AA00"}
         }
     }
@@ -82,8 +84,15 @@ def send_daily_message():
     print("推送结果：", response.json())
 
 if __name__ == "__main__":
-    # 等待到达推送时间
+    # 测试数据获取
+    print("[测试]天气数据:", get_weather("辽宁", "鞍山"))
+    print("[测试]认识天数:", get_love_days())
+    print("[测试]早安文案:", get_morning_message())
+    
+    # 等待推送时间
+    print("等待推送时间...")
     while datetime.now().strftime("%H:%M:%S") < config.post_time:
         time.sleep(1)
     
+    print("开始推送...")
     send_daily_message()
