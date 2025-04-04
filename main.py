@@ -10,25 +10,30 @@ def get_access_token():
     return response["access_token"]
 
 def get_weather(province, city):
-    """修正后的天气获取函数"""
-    city_id = "101070301"  # 鞍山固定ID
-    url = f"http://www.weather.com.cn/data/sk/{city_id}.html"
+    """使用和风天气API（稳定版）"""
+    city_id = "101070301"  # 鞍山市固定ID
+    key = "850912c546084a33b1e7fde37316d6b1"  # 申请地址：https://dev.qweather.com/
     
+    url = f"https://devapi.qweather.com/v7/weather/now?location={city_id}&key={key}"
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=5)
         data = response.json()
-        weatherinfo = data["weatherinfo"]
         
-        # 正确解析字段（根据实际API返回调整）
-        weather = weatherinfo.get("weather", "未知")
-        temp = weatherinfo.get("temp", "N/A") + "℃"  # 当前温度
-        tempn = weatherinfo.get("tempn", "N/A") + "℃" # 最低温
-        temp_max = weatherinfo.get("temp_max", temp) + "℃" # 最高温
+        weather = data["now"]["text"]              # 天气状况（如"晴"）
+        temp = data["now"]["temp"] + "℃"          # 当前温度
+        temp_min = data["now"]["feelsLike"] + "℃"  # 体感温度（或改用预报API获取真实最低温）
         
-        return weather, temp_max, tempn
+        # 获取24小时预报中的真实最高最低温
+        forecast_url = f"https://devapi.qweather.com/v7/weather/24h?location={city_id}&key={key}"
+        forecast = requests.get(forecast_url).json()
+        temp_max = forecast["hourly"][0]["temp"] + "℃"
+        temp_min = forecast["hourly"][0]["feelsLike"] + "℃"
+        
+        return weather, temp_max, temp_min
     except Exception as e:
         print(f"天气获取失败: {e}")
         return "未知", "N/A", "N/A"
+        
 def get_love_days():
     """计算认识天数"""
     start_date = datetime.strptime(config.love_date, "%Y-%m-%d").date()
