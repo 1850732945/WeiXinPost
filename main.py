@@ -10,26 +10,25 @@ def get_access_token():
     return response["access_token"]
 
 def get_weather(province, city):
-    """获取天气信息"""
-    # 这里需要确保有cityinfo.py文件提供城市ID
-
-    city_id_map = {
-        "辽宁": {
-            "鞍山": "101070301",
-            "沈阳": "101070101"
-        }
-    }
-    city_id = city_id_map[province][city]
-    headers = {
-        "Referer": f"http://www.weather.com.cn/weather1d/{city_id}.shtml",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
-    }
-    url = f"http://d1.weather.com.cn/dingzhi/{city_id}.html?_={int(time.time()*1000)}"
-    response = requests.get(url, headers=headers)
-    weather_data = eval(response.text.split(";")[0].split("=")[-1])
-    info = weather_data["weatherinfo"]
-    return info["weather"], info["temp"], info["tempn"]
-
+    """修正后的天气获取函数"""
+    city_id = "101070301"  # 鞍山固定ID
+    url = f"http://www.weather.com.cn/data/sk/{city_id}.html"
+    
+    try:
+        response = requests.get(url)
+        data = response.json()
+        weatherinfo = data["weatherinfo"]
+        
+        # 正确解析字段（根据实际API返回调整）
+        weather = weatherinfo.get("weather", "未知")
+        temp = weatherinfo.get("temp", "N/A") + "℃"  # 当前温度
+        tempn = weatherinfo.get("tempn", "N/A") + "℃" # 最低温
+        temp_max = weatherinfo.get("temp_max", temp) + "℃" # 最高温
+        
+        return weather, temp_max, tempn
+    except Exception as e:
+        print(f"天气获取失败: {e}")
+        return "未知", "N/A", "N/A"
 def get_love_days():
     """计算认识天数"""
     start_date = datetime.strptime(config.love_date, "%Y-%m-%d").date()
