@@ -2,18 +2,12 @@ import requests
 import config
 from datetime import datetime, date
 import time
+import json
 
-# 城市拼音映射表（心知天气使用拼音）
-CITY_PINYIN_MAP = {
-    "辽宁": {
-        "鞍山": "anshan",
-        "沈阳": "shenyang",
-        "大连": "dalian"
-    },
-    "北京": {
-        "北京": "beijing"
-    },
-    # 可继续添加其他城市...
+# 国家气象局站点ID映射（鞍山：54539）
+STATION_IDS = {
+    "鞍山": "54539",
+    # 可扩展其他城市...
 }
 
 def get_access_token():
@@ -22,36 +16,47 @@ def get_access_token():
     response = requests.get(url).json()
     return response["access_token"]
 
-def get_weather(province, city):
-    """使用心知天气API获取天气（含最高最低温）"""
+def get_weather():
+    """国家气象局API获取鞍山天气（含最高最低温）"""
+    station_id = STATION_IDS.get(config.city)
+    if not station_id:
+        return weather_fallback()
+    
     try:
-        # 获取城市拼音ID
-        city_pinyin = CITY_PINYIN_MAP.get(province, {}).get(city.lower())
-        if not city_pinyin:
-            raise ValueError(f"未找到城市 {province}{city} 的配置")
-        
-        # 请求每日预报（包含最高最低温）
-        url = f"https://api.seniverse.com/v3/weather/daily.json?key={config.seniverse_api_key}&location={city_pinyin}&language=zh-Hans&unit=c&start=0&days=1"
-        response = requests.get(url, timeout=5)
+        url = f"http://www.nmc.cn/rest/weather?stationid={station_id}"
+        response = requests.get(url, timeout=10)
+        response.encoding = 'utf-8'
         data = response.json()
         
-        # 解析数据
-        daily = data["results"][0]["daily"][0]
+        # 解析实时天气
+        real = data["data"]["real"]
+        weather = real["weather"]["info"]
+        temp_now = real["weather"]["temperature"]
+        
+        # 解析预报数据（今天）
+        today_forecast = data["data"]["predict"]["detail"][0]
+        temp_max = today_forecast["max"]
+        temp_min = today_forecast["min"]
+        
         return {
-            "weather": daily["text_day"],
-            "temp_now": "N/A",  # 免费版不提供实时温度
-            "temp_max": daily["high"],
-            "temp_min": daily["low"]
+            "weather": weather,
+            "temp_now": temp_now,
+            "temp_max": temp_max,
+            "temp_min": temp_min
         }
         
     except Exception as e:
-        print(f"⚠️ 天气获取失败: {e}")
-        return {
-            "weather": "未知",
-            "temp_now": "N/A",
-            "temp_max": "N/A",
-            "temp_min": "N/A"
-        }
+        print(f"气象局API错误: {str(e)[:200]}...")  # 截断长错误信息
+        return weather_fallback()
+
+def weather_fallback():
+    """天气获取失败时的备用数据"""
+    return {
+        "weather": "未知",
+        "temp_now": "N/A",
+        "temp_max": "N/A",
+        "temp_min": "N/A"
+    }
 
 def get_love_days():
     """计算认识天数"""
@@ -72,12 +77,12 @@ def get_morning_message():
             return response.json()["newslist"][0]["content"]
     except Exception as e:
         print(f"获取早安文案失败: {e}")
-    return "早安，今天是充满希望的一天！"
+    return "早安！今天是元气满满的一天~"
 
 def send_daily_message():
     """发送每日推送"""
     access_token = get_access_token()
-    weather_data = get_weather(config.province, config.city)
+    weather_data = get_weather()
     
     # 构建消息数据
     data = {
@@ -95,37 +100,32 @@ def send_daily_message():
     }
     
     # 发送请求
-    response = requests.post(
-        f"https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={access_token}",
-        json=data,
-        timeout=5
-    )
-    print("推送结果：", response.json())
-
-def test_all_functions():
-    """测试所有功能模块"""
-    print("\n=== 功能测试 ===")
-    print("[天气] 鞍山:", get_weather("辽宁", "鞍山"))
-    print("[天数] 认识天数:", get_love_days())
-    print("[文案] 早安:", get_morning_message())
-    
-    # 测试微信access_token获取
     try:
-        token = get_access_token()
-        print("[微信] access_token 获取成功:", token[:10] + "..." if token else "空")
+        response = requests.post(
+            "https://api.weixin.qq.com/cgi-bin/message/template/send",
+            params={"access_token": access_token},
+            json=data,
+            timeout=10
+        )
+        print("推送结果：", response.json())
     except Exception as e:
-        print(f"[微信] access_token 获取失败: {e}")
+        print(f"微信推送失败: {e}")
+
+def test_weather_api():
+    """测试气象局API"""
+    print("\n=== 气象局API测试 ===")
+    weather = get_weather()
+    print("实时天气:", weather["weather"])
+    print("当前温度:", weather["temp_now"])
+    print("今日最高:", weather["temp_max"])
+    print("今日最低:", weather["temp_min"])
 
 if __name__ == "__main__":
-    # 执行测试
-    test_all_functions()
+    test_weather_api()
     
-    # 等待推送时间
-    print(f"\n等待推送时间 {config.post_time}...")
-    while True:
-        now = datetime.now().strftime("%H:%M:%S")
-        if now >= config.post_time:
-            print("\n开始推送...")
-            send_daily_message()
-            break
+    print("\n等待推送时间...")
+    while datetime.now().strftime("%H:%M:%S") < config.post_time:
         time.sleep(1)
+    
+    print("开始推送...")
+    send_daily_message()
