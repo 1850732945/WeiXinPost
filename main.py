@@ -38,7 +38,7 @@ def get_morning_message():
             return response.json()["newslist"][0]["content"]
     except Exception as e:
         print(f"获取早安文案失败: {e}")
-    return "早安，愿今天又是美好的一天！"  # 默认文案
+    return "希望你今天也要好好吃饭 乖乖睡觉 坏心情都与你无关！"  # 默认文案
 
 def send_daily_message():
     """发送每日推送"""
