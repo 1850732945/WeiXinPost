@@ -12,7 +12,14 @@ def get_access_token():
 def get_weather(province, city):
     """获取天气信息"""
     # 这里需要确保有cityinfo.py文件提供城市ID
-    city_id = cityinfo.cityInfo[province][city]["AREAID"]
+
+    city_id_map = {
+        "辽宁": {
+            "鞍山": "101070301",
+            "沈阳": "101070101"
+        }
+    }
+    city_id = city_id_map[province][city]
     headers = {
         "Referer": f"http://www.weather.com.cn/weather1d/{city_id}.shtml",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
